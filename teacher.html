@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who Is He? · 선생님 화면</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Jua&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 28px 36px; min-height: 100vh; display: flex; flex-direction: column; gap: 22px; }
+  .logo { width: 52px; height: 52px; border-radius: 18px; background: linear-gradient(145deg, #8B6FD6, #5B3FB0); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 0 rgba(255,255,255,0.5); flex-shrink: 0; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand b { font-family: var(--font-en); font-weight: 700; font-size: 28px; letter-spacing: -0.5px; display: block; }
+  .brand small { font-size: 15px; color: var(--ink-soft); }
+
+  /* 방 만들기 */
+  #setup .card { padding: 28px 32px; display: flex; flex-direction: column; gap: 18px; }
+  #setup h2 { font-size: 24px; display: flex; align-items: baseline; gap: 10px; }
+  .word-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .word-grid .chip { justify-content: flex-start; padding: 6px 12px 6px 8px; font-size: 19px; }
+  .seg .chip { font-family: var(--font-ko); font-weight: 400; font-size: 20px; padding: 10px 22px; }
+  .switch { display: inline-flex; align-items: center; gap: 10px; font-size: 20px; cursor: pointer; padding: 8px 16px 8px 8px; border-radius: 999px; background: rgba(255,255,255,0.6); }
+  .switch input { width: 26px; height: 26px; accent-color: var(--violet-deep); }
+  .big { height: 76px; padding: 0 48px; font-size: 30px; border-radius: 26px; }
+
+  /* 대기실 */
+  #lobby { flex-direction: row; align-items: stretch; }
+  .qr-card { width: 480px; flex-shrink: 0; padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .qr-box { width: 320px; height: 320px; border-radius: 26px; background: #fff; padding: 18px; box-shadow: 0 14px 34px rgba(46,37,80,0.16); }
+  .qr-box svg { width: 100%; height: 100%; display: block; }
+  .room-code { font-family: var(--font-en); font-weight: 700; font-size: 72px; line-height: 1; letter-spacing: 8px; color: var(--violet-deep); }
+  .lobby-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+  .kid-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 16px 10px; }
+  .kid { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 18px; text-align: center; }
+
+  /* 게임 중 */
+  .topbar { padding: 14px 20px 14px 24px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .timer { display: flex; align-items: center; gap: 14px; padding: 8px 22px 8px 10px; border-radius: 999px; background: rgba(255,255,255,0.6); border: 1.5px solid rgba(255,255,255,0.9); }
+  .timer b { font-family: var(--font-en); font-weight: 700; font-size: 34px; line-height: 1; display: block; }
+  .ctrl { height: 56px; padding: 0 22px; font-size: 20px; display: inline-flex; align-items: center; gap: 8px; }
+  .game-main { flex: 1; min-height: 0; display: flex; gap: 22px; }
+  .panel { flex: 1; min-width: 0; padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+  .panel h2 { font-size: 30px; }
+
+  /* 단계 2~3: 간단한 점수 목록 */
+  .simple-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .simple-list .item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 18px; background: rgba(255,255,255,0.6); font-size: 20px; }
+  .simple-list .item b { margin-left: auto; font-family: var(--font-en); }
+
+  /* 단계 4: 막대 레이스 */
+  .race { position: relative; }
+  .race-row { position: absolute; left: 0; right: 0; height: 48px; display: flex; align-items: center; gap: 14px;
+              transition: transform 0.5s cubic-bezier(.2,.8,.2,1), opacity 0.4s; }
+  .race-row .rank { width: 34px; text-align: right; font-family: var(--font-en); font-weight: 700; font-size: 24px; color: var(--ink-soft); }
+  .race-row .rank.r1 { color: #B07E00; } .race-row .rank.r2 { color: #6A7385; } .race-row .rank.r3 { color: #9A5530; }
+  .race-row .name { width: 84px; font-size: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tube { flex: 1; height: 34px; border-radius: 999px; background: rgba(255,255,255,0.35); border: 1.5px solid rgba(255,255,255,0.85); box-shadow: inset 0 2px 6px rgba(70,50,130,0.12); }
+  .fill { height: 100%; min-width: 46px; border-radius: 999px; display: flex; align-items: center; justify-content: flex-end; padding-right: 14px;
+          box-shadow: inset 0 3px 0 rgba(255,255,255,0.55), 0 4px 12px rgba(46,37,80,0.12); transition: width 0.5s cubic-bezier(.2,.8,.2,1); }
+  .fill span { font-family: var(--font-en); font-weight: 700; font-size: 19px; color: #fff; text-shadow: 0 1px 2px rgba(46,37,80,0.35); }
+  .badges { width: 110px; display: flex; align-items: center; gap: 6px; }
+  .race-more { margin-top: auto; text-align: center; font-size: 16px; color: var(--ink-soft); }
+
+  /* 단계 5: 보너스·골든·블라인드·소식 */
+  .gift { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: linear-gradient(180deg, #FFE7A8, #F5B841); color: #4A3300; font-size: 16px; animation: pop 0.45s ease-out both, glow 1.2s ease-in-out 2; }
+  .up { font-family: var(--font-en); font-weight: 700; font-size: 16px; color: #1F8A66; animation: pop 0.45s ease-out both; }
+  .blind-cover { position: absolute; inset: 70px 20px 20px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+                 background: rgba(255,255,255,0.35); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); z-index: 5; }
+  .blind-cover b { font-size: 56px; }
+  .golden-banner { padding: 10px 18px; border-radius: 999px; background: linear-gradient(180deg, #FFE7A8, #F5B841); color: #4A3300; font-size: 22px; animation: glow 1.2s infinite; }
+  aside.side { width: 330px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; }
+  .stats { padding: 20px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .stats span { font-size: 15px; color: var(--ink-soft); display: block; }
+  .stats b { font-family: var(--font-en); font-weight: 700; font-size: 36px; line-height: 1.1; }
+  .feed { flex: 1; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; }
+  .feed-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 18px; background: rgba(255,255,255,0.55); font-size: 18px; animation: pop 0.4s ease-out both; }
+  .feed-item.gold { background: linear-gradient(135deg, rgba(255,231,168,0.95), rgba(245,184,65,0.75)); color: #4A3300; }
+
+  /* 결과 */
+  #result { align-items: center; }
+  .podium { display: flex; align-items: flex-end; justify-content: center; gap: 24px; }
+  .stand { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .stand .block { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px 28px 16px 16px; }
+  .stand .num { font-family: var(--font-en); font-weight: 700; line-height: 1; }
+  .top45 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; width: min(1100px, 100%); }
+  .card45 { padding: 14px 22px; display: flex; align-items: center; gap: 16px; }
+  .rest { width: min(1300px, 100%); padding: 14px 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 16px; font-size: 17px; }
+
+  @media (max-width: 1100px) {
+    #lobby, .game-main { flex-direction: column; }
+    .qr-card, aside.side { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== 1. 방 만들기 ===================== -->
+<main id="setup" class="wrap">
+  <header class="brand">
+    <div class="logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M8.5 9a2 2 0 1 1 2.6 1.9c-.5.2-.6.6-.6 1.1"/></svg></div>
+    <div><b>Who Is He?</b><small>Lesson 10 · 게임 방 만들기</small></div>
+  </header>
+  <section class="glass card">
+    <h2>1. 오늘의 단어 <span id="wordCount" class="muted" style="font-size:18px"></span></h2>
+    <div class="row">
+      <button class="chip" type="button" data-pick="family">가족 단어</button>
+      <button class="chip" type="button" data-pick="all">전체 20개</button>
+      <button class="chip" type="button" data-pick="none">모두 해제</button>
+    </div>
+    <div id="wordGrid" class="word-grid" aria-label="단어 선택"></div>
+    <h2>2. 게임 시간</h2>
+    <div class="row seg" id="timeSeg">
+      <button class="chip" type="button" data-sec="60">1분</button>
+      <button class="chip on" type="button" data-sec="120">2분</button>
+      <button class="chip" type="button" data-sec="180">3분</button>
+    </div>
+    <h2>3. 재미 장치</h2>
+    <div class="row">
+      <label class="switch"><input type="checkbox" id="optBonus" checked> 미스터리 상자</label>
+      <label class="switch"><input type="checkbox" id="optBlind" checked> 마지막 30초 블라인드</label>
+    </div>
+    <div class="row" style="justify-content:flex-end">
+      <button id="createBtn" class="jelly btn-violet big" type="button">방 만들기</button>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== 2. 대기실 ===================== -->
+<main id="lobby" class="wrap hidden">
+  <section class="glass qr-card">
+    <div style="text-align:center">
+      <b class="en" style="font-size:40px;font-weight:700">Who Is He?</b>
+      <p class="muted" style="margin:4px 0 0;font-size:18px">휴대폰 카메라로 찍고 들어오세요</p>
+    </div>
+    <div class="qr-box" id="qr" role="img" aria-label="학생 입장 QR 코드"></div>
+    <div style="text-align:center">
+      <div class="muted" style="font-size:18px">방 번호</div>
+      <div class="room-code" id="roomCode">----</div>
+      <div class="muted" id="joinUrl" style="font-size:14px;margin-top:8px;word-break:break-all"></div>
+    </div>
+  </section>
+  <section class="lobby-main">
+    <div class="glass row" style="padding:18px 22px" id="lobbyInfo"></div>
+    <div class="glass" style="flex:1;padding:24px 28px;display:flex;flex-direction:column;gap:18px">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="font-size:30px">들어온 탐정들</h2>
+        <b class="en" style="font-size:34px;color:var(--violet-deep)"><span id="kidCount">0</span><span style="font-family:var(--font-ko);font-weight:400;font-size:20px;color:var(--ink-soft)"> 명</span></b>
+      </div>
+      <div class="kid-grid" id="kidGrid"></div>
+      <div class="row" style="margin-top:auto;justify-content:space-between">
+        <button class="jelly btn-white ctrl" type="button" id="cancelRoomBtn">방 지우기</button>
+        <button class="jelly btn-violet big" type="button" id="startBtn" disabled>▶ 게임 시작</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== 3. 게임 중 ===================== -->
+<main id="game" class="wrap hidden">
+  <header class="glass topbar">
+    <div class="brand" style="flex:1">
+      <div class="logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></div>
+      <div><b>Who Is He?</b><small id="gameInfo"></small></div>
+    </div>
+    <div class="golden-banner hidden" id="goldenBanner">골든 타임! 정답 2배</div>
+    <div class="timer">
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="23" fill="none" stroke="rgba(91,63,176,0.15)" stroke-width="7"/><circle id="ring" cx="28" cy="28" r="23" fill="none" stroke="#8B6FD6" stroke-width="7" stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="0" transform="rotate(-90 28 28)"/></svg>
+      <div><span class="muted" style="font-size:14px">남은 시간</span><b id="timeText">--:--</b></div>
+    </div>
+    <div class="row">
+      <button class="jelly btn-amber ctrl" type="button" id="goldenBtn">⚡ 골든 타임</button>
+      <button class="jelly btn-white ctrl" type="button" id="blindBtn">블라인드</button>
+      <button class="jelly btn-pink ctrl" type="button" id="endBtn">게임 종료</button>
+    </div>
+  </header>
+  <div class="game-main">
+    <section class="glass panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>실시간 레이스</h2>
+        <span class="muted" id="raceNote" style="font-size:16px"></span>
+      </div>
+      <div class="race" id="race"></div>
+      <div class="race-more" id="raceMore"></div>
+      <div class="blind-cover hidden" id="blindCover"><b>순위 비공개!</b><span class="muted" style="font-size:22px">누가 1등일까요? 끝까지 풀어 보세요</span></div>
+    </section>
+    <aside class="side">
+      <div class="glass stats">
+        <div><span>전체 정답률</span><b id="stRate">-</b></div>
+        <div><span>열린 상자</span><b id="stBox">0개</b></div>
+        <div><span>푼 문제 합계</span><b id="stTotal">0</b></div>
+        <div><span>어려운 단어</span><b id="stHard" style="font-size:24px">-</b></div>
+      </div>
+      <div class="glass feed">
+        <h3 style="font-size:22px">방금 일어난 일</h3>
+        <div id="feed" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- ===================== 4. 결과 ===================== -->
+<main id="result" class="wrap hidden">
+  <header style="text-align:center">
+    <div class="muted" style="font-size:20px" id="resultInfo"></div>
+    <h1 style="font-size:50px;letter-spacing:-1px">오늘의 패밀리 탐정왕</h1>
+  </header>
+  <section class="podium" id="podium"></section>
+  <section class="top45" id="top45"></section>
+  <section class="glass rest hidden" id="rest"></section>
+  <div class="row" style="justify-content:center;margin-top:8px">
+    <button class="jelly btn-white ctrl" type="button" id="deleteBtn">학생 기록 지우기</button>
+    <button class="jelly btn-violet ctrl" type="button" id="newGameBtn">새 게임 만들기</button>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+// =====================================================================
+// 선생님 화면
+// =====================================================================
+const $ = (s) => document.querySelector(s);
+const SAVE_KEY = 'whoishe-host';
+const state = {
+  words: [],
+  selected: new Set([1, 2, 3, 4, 5, 6]),
+  duration: 120,
+  room: null,          // { room_id, code, host_secret } — 비밀 코드는 이 브라우저에만 저장
+  roomRow: null,       // rooms 테이블의 최신 행
+  players: new Map(),  // id → players 행
+  watcher: null,
+  renderTimer: null,
+  ending: false,
+  prev: new Map(),     // 직전 화면의 점수·순위 (소식 만들기용)
+  blindSet: false,
+};
+
+function show(id) {
+  for (const s of ['setup', 'lobby', 'game', 'result']) {
+    const node = document.getElementById(s);
+    if (node) node.classList.toggle('hidden', s !== id);
+  }
+}
+
+// ---------------- 1. 방 만들기 ----------------
+async function loadWords() {
+  const { data, error } = await db.from('words').select('*').order('id');
+  if (error) { toast(friendly(error.message)); return; }
+  state.words = data;
+  renderWordGrid();
+}
+function renderWordGrid() {
+  const grid = $('#wordGrid');
+  grid.replaceChildren(...state.words.map((w) => el('button', {
+    class: 'chip' + (state.selected.has(w.id) ? ' on' : ''), type: 'button',
+    'aria-pressed': state.selected.has(w.id) ? 'true' : 'false',
+    onclick: () => { state.selected.has(w.id) ? state.selected.delete(w.id) : state.selected.add(w.id); renderWordGrid(); }
+  }, el('img', { src: w.image, alt: '' }), w.word)));
+  $('#wordCount').textContent = state.selected.size + '개 선택 (4개 이상)';
+  $('#createBtn').disabled = state.selected.size < 4;
+}
+document.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
+  const kind = b.dataset.pick;
+  state.selected = new Set(state.words.filter((w) => kind === 'all' || (kind === 'family' && w.category === 'family')).map((w) => w.id));
+  renderWordGrid();
+}));
+document.querySelectorAll('#timeSeg .chip').forEach((b) => b.addEventListener('click', () => {
+  state.duration = Number(b.dataset.sec);
+  document.querySelectorAll('#timeSeg .chip').forEach((x) => x.classList.toggle('on', x === b));
+}));
+
+$('#createBtn').addEventListener('click', async () => {
+  $('#createBtn').disabled = true;
+  try {
+    const r = await call('create_room', {
+      p_word_ids: [...state.selected], p_duration: state.duration, p_bonus: $('#optBonus').checked
+    });
+    state.room = { room_id: r.room_id, code: r.code, host_secret: r.host_secret };
+    state.room.auto_blind = $('#optBlind').checked;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state.room));
+    await openRoom();
+  } catch (e) { toast(e.message); }
+  $('#createBtn').disabled = false;
+});
+
+// ---------------- 2. 대기실 ----------------
+async function openRoom() {
+  await refresh();
+  if (!state.room) return;
+  if (state.watcher) state.watcher.stop();
+  state.watcher = watch({
+    name: 'teacher-' + state.room.room_id,
+    tables: [
+      { table: 'players', filter: 'room_id=eq.' + state.room.room_id },
+      { table: 'rooms', filter: 'id=eq.' + state.room.room_id }
+    ],
+    onChange: (p) => {
+      if (p.table === 'players') {
+        if (p.eventType === 'DELETE') state.players.delete(p.old.id);
+        else state.players.set(p.new.id, p.new);
+      } else if (p.table === 'rooms' && p.new) {
+        state.roomRow = { ...state.roomRow, ...p.new };
+      }
+      scheduleRender();
+    },
+    refresh,
+    pollMs: 1500
+  });
+  route();
+}
+async function refresh() {
+  if (!state.room) return;
+  const id = state.room.room_id;
+  const [room, players] = await Promise.all([
+    db.from('rooms').select('*').eq('id', id).maybeSingle(),
+    db.from('players').select('*').eq('room_id', id)
+  ]);
+  if (!room.data) { forgetRoom(); toast('방이 없어졌어요. 새로 만들어 주세요.'); return; }
+  state.roomRow = room.data;
+  state.players = new Map((players.data || []).map((p) => [p.id, p]));
+  scheduleRender();
+}
+function scheduleRender() {          // 알림이 한꺼번에 와도 0.4초에 한 번만 다시 그림
+  if (state.renderTimer) return;
+  state.renderTimer = setTimeout(() => { state.renderTimer = null; route(); }, 400);
+}
+function route() {
+  const st = state.roomRow && state.roomRow.status;
+  if (st === 'waiting') { show('lobby'); renderLobby(); }
+  else if (st === 'playing') { if ($('#game').classList.contains('hidden')) enterGame(); renderGame(); }
+  else if (st === 'ended') { if (!state.ending && $('#result').classList.contains('hidden')) renderResult(); }
+}
+function renderLobby() {
+  const code = state.roomRow.code;
+  if ($('#roomCode').textContent !== code) {
+    $('#roomCode').textContent = code;
+    const url = new URL('student.html?code=' + code, location.href).href;
+    $('#joinUrl').textContent = url;
+    const qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    $('#qr').innerHTML = qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
+    const names = state.words.filter((w) => state.roomRow.word_ids.includes(w.id)).map((w) => w.word);
+    $('#lobbyInfo').replaceChildren(
+      el('span', { class: 'muted', style: 'font-size:19px;margin-right:6px' }, '오늘의 단어'),
+      ...names.map((n) => el('span', { class: 'chip' }, n)),
+      el('span', { class: 'chip', style: 'font-family:var(--font-ko);font-weight:400;background:linear-gradient(180deg,#D9CCF6,#A98FEA)' }, '게임 시간 ' + state.roomRow.duration_sec / 60 + '분'),
+      el('span', { class: 'chip', style: 'font-family:var(--font-ko);font-weight:400;background:linear-gradient(180deg,#FFE7A8,#F5B841);color:#4A3300' }, '미스터리 상자 ' + (state.roomRow.bonus_on ? '켬' : '끔'))
+    );
+  }
+  const kids = [...state.players.values()].sort((a, b) => new Date(a.joined_at) - new Date(b.joined_at));
+  $('#kidCount').textContent = kids.length;
+  $('#kidGrid').replaceChildren(...kids.map((p) => el('div', { class: 'kid pop' }, avatarEl(p, 64), el('span', {}, p.name))));
+  $('#startBtn').disabled = kids.length === 0;
+}
+$('#cancelRoomBtn').addEventListener('click', async () => {
+  if (!confirm('이 방을 지울까요? 들어온 학생 정보도 함께 지워져요.')) return;
+  try { await call('delete_room', { p_room: state.room.room_id, p_secret: state.room.host_secret }); } catch (e) { toast(e.message); }
+  forgetRoom();
+});
+function forgetRoom() {
+  if (state.watcher) state.watcher.stop();
+  state.watcher = null; state.room = null; state.roomRow = null; state.players = new Map(); state.ending = false;
+  state.prev = new Map(); state.blindSet = false; $('#feed').replaceChildren();
+  localStorage.removeItem(SAVE_KEY);
+  show('setup');
+}
+
+// ---------------- 3. 게임 시작 · 타이머 · 종료 ----------------
+$('#startBtn').addEventListener('click', async () => {
+  $('#startBtn').disabled = true;
+  try {
+    const r = await call('start_game', { p_room: state.room.room_id, p_secret: state.room.host_secret });
+    state.roomRow = { ...state.roomRow, status: 'playing', ends_at: r.ends_at };
+    route();
+  } catch (e) { toast(e.message); $('#startBtn').disabled = false; }
+});
+let timerLoop = null;
+function enterGame() {
+  show('game');
+  $('#gameInfo').textContent = `Lesson 10 · 방 번호 ${state.roomRow.code} · ${state.players.size}명 참여 중`;
+  clearInterval(timerLoop);
+  timerLoop = setInterval(tick, 250);
+  tick();
+}
+function tick() {
+  if (!state.roomRow || state.roomRow.status !== 'playing') { clearInterval(timerLoop); return; }
+  const left = secondsLeft(state.roomRow.ends_at);
+  $('#timeText').textContent = mmss(left);
+  $('#ring').setAttribute('stroke-dashoffset', String(144.5 * (1 - left / state.roomRow.duration_sec)));
+  const golden = state.roomRow.golden_until && new Date(state.roomRow.golden_until).getTime() > serverNow();
+  document.body.classList.toggle('golden', !!golden);
+  $('#goldenBanner').classList.toggle('hidden', !golden);
+  $('#goldenBtn').disabled = !!golden;
+  if (golden) $('#goldenBanner').textContent = `골든 타임! 정답 2배 · ${Math.ceil((new Date(state.roomRow.golden_until).getTime() - serverNow()) / 1000)}초`;
+  if (state.room.auto_blind && !state.blindSet && left <= 30 && left > 0) { state.blindSet = true; setBlind(true); }
+  if (left <= 0) endGame();
+}
+async function endGame() {
+  if (state.ending) return;
+  state.ending = true;
+  clearInterval(timerLoop);
+  try { await call('end_game', { p_room: state.room.room_id, p_secret: state.room.host_secret }); } catch (e) { toast(e.message); }
+  state.roomRow = { ...state.roomRow, status: 'ended' };
+  await refresh();
+  renderResult();
+}
+$('#endBtn').addEventListener('click', () => { if (confirm('지금 게임을 끝낼까요?')) endGame(); });
+
+function renderGame() {
+  const list = sortPlayers(state.players.values());
+  $('#gameInfo').textContent = `Lesson 10 · 방 번호 ${state.roomRow.code} · ${list.length}명 참여 중`;
+  renderRace(list);
+  renderStatsAndFeed(list);
+}
+
+// ---------------- 4. 막대 레이스 ----------------
+const ROW = 54, SHOW = 12;
+const rows = new Map();   // player id → 화면의 막대 한 줄
+function renderRace(list) {
+  const race = $('#race');
+  const max = Math.max(10, ...list.map((p) => p.score));
+  $('#raceNote').textContent = `상위 ${Math.min(SHOW, list.length)}명 · 막대 = 정답 + 보너스 점수`;
+  list.forEach((p, i) => {
+    let row = rows.get(p.id);
+    if (!row) {
+      row = el('div', { class: 'race-row', style: `transform:translateY(${SHOW * ROW}px);opacity:0` },
+        el('span', { class: 'rank' }), avatarEl(p, 40), el('span', { class: 'name' }, p.name),
+        el('div', { class: 'tube' }, el('div', { class: 'fill', style: `width:0%;background:linear-gradient(90deg, ${colorFor(p.id)}B3, ${colorFor(p.id)})` }, el('span'))),
+        el('div', { class: 'badges' }));
+      race.append(row);
+      rows.set(p.id, row);
+    }
+    const visible = i < SHOW;
+    row.style.transform = `translateY(${(visible ? i : SHOW) * ROW}px)`;
+    row.style.opacity = visible ? '1' : '0';
+    const rank = row.querySelector('.rank');
+    const setRank = () => { rank.textContent = i + 1; rank.className = 'rank' + (i < 3 ? ' r' + (i + 1) : ''); };
+    clearTimeout(row.rankTimer);
+    if (!rank.textContent) setRank(); else row.rankTimer = setTimeout(setRank, 520);   // 막대가 다 움직인 뒤 순위 숫자 바꾸기
+    row.querySelector('.fill').style.width = Math.max(4, (p.score / max) * 100) + '%';
+    row.querySelector('.fill span').textContent = p.score;
+  });
+  for (const [id, row] of rows) if (!state.players.has(id)) { row.remove(); rows.delete(id); }
+  race.style.height = Math.min(SHOW, list.length) * ROW + 'px';
+  $('#raceMore').textContent = list.length > SHOW ? `그 밖의 ${list.length - SHOW}명도 열심히 달리는 중` : '';
+}
+
+// ---------------- 5. 골든 타임 · 블라인드 · 소식 · 통계 ----------------
+$('#goldenBtn').addEventListener('click', async () => {
+  try {
+    const r = await call('set_golden', { p_room: state.room.room_id, p_secret: state.room.host_secret, p_seconds: 20 });
+    state.roomRow = { ...state.roomRow, golden_until: r.golden_until };
+    addFeed('골든 타임 시작! 20초 동안 정답 2배', true);
+  } catch (e) { toast(e.message); }
+});
+let blindOn = false;
+async function setBlind(on) {
+  blindOn = on;
+  $('#blindCover').classList.toggle('hidden', !on);
+  $('#race').style.filter = on ? 'blur(10px)' : '';
+  $('#blindBtn').textContent = on ? '블라인드 해제' : '블라인드';
+  try { await call('set_blind', { p_room: state.room.room_id, p_secret: state.room.host_secret, p_on: on }); } catch (e) { /* 화면 표시는 그대로 */ }
+}
+$('#blindBtn').addEventListener('click', () => { state.blindSet = true; setBlind(!blindOn); });
+
+function addFeed(text, gold = false) {
+  const box = $('#feed');
+  box.prepend(el('div', { class: 'feed-item' + (gold ? ' gold' : '') }, text));
+  while (box.children.length > 5) box.lastChild.remove();
+}
+function renderStatsAndFeed(list) {
+  const rankOf = new Map(list.map((p, i) => [p.id, i + 1]));
+  for (const p of list) {
+    const before = state.prev.get(p.id);
+    const row = rows.get(p.id);
+    if (before) {
+      const gotBonus = p.bonus - before.bonus;
+      if (gotBonus > 0) {
+        addFeed(`${p.name} 미스터리 상자 +${gotBonus}!`, true);
+        if (row) row.querySelector('.badges').replaceChildren(el('span', { class: 'gift' }, '🎁 +' + gotBonus));
+      }
+      const climb = before.rank - rankOf.get(p.id);
+      if (climb > 0 && rankOf.get(p.id) <= 3) addFeed(`${withJosa(p.name, '이', '가')} ${rankOf.get(p.id)}위로 올라섰어요`);
+      if (climb > 0 && row && gotBonus <= 0) row.querySelector('.badges').replaceChildren(el('span', { class: 'up' }, '▲' + climb));
+      if (before.correct === 0 && p.correct > 0) addFeed(`${p.name} 첫 정답!`);
+      if (row && (gotBonus > 0 || climb > 0)) setTimeout(() => row.querySelector('.badges').replaceChildren(), 3500);
+    }
+  }
+  state.prev = new Map(list.map((p) => [p.id, { bonus: p.bonus, correct: p.correct, rank: rankOf.get(p.id) }]));
+  const answered = list.reduce((s, p) => s + p.answered, 0);
+  const correct = list.reduce((s, p) => s + p.correct, 0);
+  $('#stRate').textContent = answered ? Math.round((correct / answered) * 100) + '%' : '-';
+  $('#stTotal').textContent = answered;
+}
+async function refreshAnswerStats() {   // 어려운 단어·열린 상자 수는 10초마다 한 번 계산
+  if (!state.roomRow || state.roomRow.status !== 'playing') return;
+  const { data } = await db.from('answers').select('word_id,is_correct,bonus').eq('room_id', state.room.room_id);
+  if (!data) return;
+  $('#stBox').textContent = data.filter((a) => a.bonus > 0).length + '개';
+  const by = new Map();
+  for (const a of data) { const s = by.get(a.word_id) || { n: 0, ok: 0 }; s.n++; s.ok += a.is_correct ? 1 : 0; by.set(a.word_id, s); }
+  let hard = null;
+  for (const [id, s] of by) if (s.n >= 3 && (!hard || s.ok / s.n < hard.rate)) hard = { id, rate: s.ok / s.n };
+  const w = hard && state.words.find((x) => x.id === hard.id);
+  $('#stHard').textContent = w ? w.word : '-';
+}
+setInterval(refreshAnswerStats, 10000);
+
+// ---------------- 6. 결과 ----------------
+function renderResult() {
+  show('result');
+  clearInterval(timerLoop);
+  document.body.classList.remove('golden');
+  const list = sortPlayers(state.players.values());
+  $('#resultInfo').textContent = `Lesson 10 · Who Is He? · ${list.length}명 참여`;
+  const detail = (p) => `정답 ${p.correct} · 보너스 +${p.bonus}`;
+  const looks = [
+    { h: 210, avatar: 118, ring: '#F5B841', bg: 'linear-gradient(180deg, rgba(255,240,199,0.92), rgba(245,184,65,0.55))', num: '#8A5A00', size: 70 },
+    { h: 170, avatar: 96, ring: '#DDE2EA', bg: 'linear-gradient(180deg, rgba(235,239,245,0.85), rgba(190,198,212,0.55))', num: '#5C6577', size: 56 },
+    { h: 140, avatar: 96, ring: '#D9A27E', bg: 'linear-gradient(180deg, rgba(250,224,206,0.9), rgba(214,150,110,0.5))', num: '#8A4A22', size: 52 }
+  ];
+  const stand = (p, i) => {
+    if (!p) return el('div', { class: 'stand', style: 'width:260px' });
+    const k = looks[i];
+    return el('div', { class: 'stand pop', style: `width:${i === 0 ? 290 : 260}px;animation-delay:${(2 - i) * 0.35}s` },
+      i === 0 ? el('span', { style: 'font-size:46px', 'aria-hidden': 'true' }, '👑') : null,
+      el('span', { style: `border-radius:50%;box-shadow:0 0 0 6px ${k.ring}` }, avatarEl(p, k.avatar)),
+      el('span', { style: `font-size:${i === 0 ? 34 : 30}px` }, p.name),
+      el('div', { class: 'glass block', style: `width:100%;height:${k.h}px;background:${k.bg}` },
+        el('span', { class: 'num', style: `font-size:${k.size}px;color:${k.num}` }, i + 1),
+        el('span', { style: 'font-size:24px' }, p.score + '점'),
+        el('span', { class: 'muted', style: 'font-size:16px' }, detail(p))));
+  };
+  $('#podium').replaceChildren(stand(list[1], 1), stand(list[0], 0), stand(list[2], 2));
+  $('#top45').replaceChildren(...list.slice(3, 5).map((p, j) => el('div', { class: 'glass card45 pop' },
+    el('b', { class: 'en muted', style: 'font-size:34px;width:30px' }, j + 4), avatarEl(p, 58),
+    el('span', { style: 'font-size:28px;flex:1' }, p.name),
+    el('div', { style: 'text-align:right' }, el('div', { style: 'font-size:26px' }, p.score + '점'), el('div', { class: 'muted', style: 'font-size:15px' }, detail(p))))));
+  const rest = list.slice(5);
+  $('#rest').classList.toggle('hidden', rest.length === 0);
+  $('#rest').replaceChildren(...rest.map((p, j) => el('div', { class: 'row', style: 'gap:8px' },
+    el('span', { class: 'en muted', style: 'width:26px;text-align:right' }, j + 6), el('span', { style: 'flex:1' }, p.name), el('span', { class: 'en' }, p.score + '점'))));
+  if (window.confetti && list.length) setTimeout(() => confetti({ particleCount: 160, spread: 90, origin: { y: 0.35 }, colors: ['#8B6FD6', '#F08A9B', '#F5B841', '#5CC7A8', '#6FB6F0'] }), 900);
+}
+$('#newGameBtn').addEventListener('click', () => forgetRoom());
+$('#deleteBtn').addEventListener('click', async () => {
+  if (!confirm('학생 이름과 점수 기록을 모두 지울까요?')) return;
+  try { await call('delete_room', { p_room: state.room.room_id, p_secret: state.room.host_secret }); toast('기록을 지웠어요.'); } catch (e) { toast(e.message); }
+  forgetRoom();
+});
+
+// ---------------- 시작: 새로고침해도 만들던 방으로 돌아오기 ----------------
+(async function init() {
+  await loadWords();
+  const saved = localStorage.getItem(SAVE_KEY);
+  if (saved) {
+    state.room = JSON.parse(saved);
+    await openRoom();
+  } else {
+    show('setup');
+  }
+})();
+</script>
+</body>
+</html>
